@@ -1,6 +1,6 @@
 package demo
 
-import akka.actor.{Actor, ActorSystem, Props}
+import akka.actor.{ActorLogging, Actor, ActorSystem, Props}
 import scala.concurrent.duration._
 
 /**
@@ -18,7 +18,7 @@ case class A1Message(message: String)
 case class A2Message(message: String)
 case class A3Message(message: String)
 case class A4Message(message: String)
-case class VoidMessage(message: String)
+case class VoidMessage()
 
 /**
  * Four actor have been defined in which each actor prints it's path and corresponding message. Then each actor
@@ -30,15 +30,15 @@ case class VoidMessage(message: String)
  * The A3Actor does not communicate with other actors.
  */
 
-class A1Actor extends Actor {
+class A1Actor extends Actor with ActorLogging {
   val a2Actor = context.actorOf(Props[A2Actor],"A2")
 
   override def receive: Receive = {
     case A1Message(message) =>
-      println("A1Message received on " + self.path)
-      println(message)
+      log.info("A1Message received on " + self.path)
+      log.info(message)
       directToA2(message)
-    case _ => println("Received unexpected message for A1Actor")
+    case _ => log.error("Received unexpected message for A1Actor")
   }
 
   def directToA2(message: String) = {
@@ -46,13 +46,13 @@ class A1Actor extends Actor {
   }
 }
 
-class A2Actor extends Actor {
+class A2Actor extends Actor with ActorLogging {
   val a4Actor = context.actorOf(Props[A4Actor],"A4")
 
   override def receive: Actor.Receive = {
     case A2Message(message) =>
-      println("A2Message received on " + self.path)
-      println(message)
+      log.info("A2Message received on " + self.path)
+      log.info(message)
       directToA4(message)
     case _ => println("Received unexpected message for A2Actor")
   }
@@ -63,24 +63,24 @@ class A2Actor extends Actor {
 
 }
 
-class A3Actor extends Actor {
+class A3Actor extends Actor with ActorLogging {
   override def receive: Actor.Receive = {
     case A3Message(message) =>
-      println("A3Message received on " + self.path)
-      println(message)
-    case _ => println("Received unexpected message for A3Actor")
+      log.info("A3Message received on " + self.path)
+      log.info(message)
+    case _ => log.error("Received unexpected message for A3Actor")
   }
 }
 
-class A4Actor extends Actor {
+class A4Actor extends Actor with ActorLogging {
   val a3Actor = context.actorOf(Props[A3Actor],"A3")
 
   override def receive: Actor.Receive = {
     case A4Message(message) =>
-      println("A4Message received on " + self.path)
-      println(message)
+      log.info("A4Message received on " + self.path)
+      log.info(message)
       direcToA3(message)
-    case _ => println("Received unexpected message for A4Actor")
+    case _ => log.error("Received unexpected message for A4Actor")
   }
 
   def direcToA3(message : String): Unit = {
@@ -107,7 +107,7 @@ object PathDemoApp extends App {
  * If the counter cnt % 2 == 0 then a A1Message is sent to the A1Actor otherwise a VoidMessage is sent.
  *
  */
-class ScheduleInstructor extends Actor {
+class ScheduleInstructor extends Actor with ActorLogging {
   val a1Actor = context.actorOf(Props[A1Actor],"A1")
 
   import context.dispatcher
@@ -122,8 +122,8 @@ class ScheduleInstructor extends Actor {
       if(cnt % 2 == 0)
         a1Actor ! A1Message("This is a valid message")
       else
-        a1Actor ! VoidMessage("Void message")
+        a1Actor ! VoidMessage
       cnt=cnt + 1
-    case _ => println("Some really went wrong")
+    case _ => log.error("Some really went wrong")
   }
 }

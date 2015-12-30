@@ -14,18 +14,18 @@ case class Result(result : Int)
  * a Result message back and will print the result.
  */
 
-class OpActor extends Actor {
+class OpActor extends Actor with ActorLogging {
 
   val calcActor = context.actorOf(Props[CalculateActor], name = "calculator")
 
   override def receive: Actor.Receive = {
     case Variable(num1,num2) =>
-      println(num1 + " " + num2)
+      log.info("variable(" + num1 + "," + num2 + ")")
       calcActor ! Variable(num1,num2)
     case Result(result) =>
       println("result is = " + result )
     case _ =>
-      println("Unknown message")
+      log.error("Unexpected message type")
   }
 }
 
@@ -34,13 +34,13 @@ class OpActor extends Actor {
  * This is done by sender() ! Result(num1 + num2)
  */
 
-class CalculateActor extends Actor {
+class CalculateActor extends Actor with ActorLogging {
 
   override def receive: Receive = {
     case Variable(num1,num2) =>
-      println("Send back result")
+      log.info("Send back result")
       sender() ! Result(num1 + num2)
-    case _ => println("Invalid message received")
+    case _ => log.error("Unexpected message type")
   }
 }
 
@@ -52,7 +52,6 @@ object SenderDemoApp extends App {
 
   opActor ! Variable(5,10)
 
-  system.registerOnTermination(system)
 }
 
 
